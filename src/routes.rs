@@ -1,25 +1,24 @@
-use axum::{
-    routing::{get, post},
-    Router,
-};
+use crate::{rate_limit::ApiKeyExtractor, state::AppState};
+use axum::Router;
 use std::sync::Arc;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
-
-use crate::{
-    handlers::{api as api_handlers, auth as auth_handlers},
-    rate_limit::ApiKeyExtractor,
-    state::AppState,
-};
+use utoipa::openapi::security::{ApiKey, ApiKeyValue, HttpAuthScheme, HttpBuilder, SecurityScheme};
+use utoipa::openapi::{Components, OpenApi};
+use utoipa_axum::{router::OpenApiRouter, routes};
+use utoipa_swagger_ui::SwaggerUi;
 
 pub fn app_router(state: Arc<AppState>) -> Router {
-    let auth = Router::new()
-        .route("/register", post(auth_handlers::register))
-        .route("/login", post(auth_handlers::login))
-        .route("/refresh", post(auth_handlers::refresh))
-        .route("/logout", post(auth_handlers::logout))
-        .route("/me", get(auth_handlers::me))
-        .route("/api-key/rotate", post(auth_handlers::rotate_api_key));
+    // auth: каждый handler добавляем отдельно
+    let auth = OpenApiRouter::new()
+        .routes(routes!(crate::handlers::auth::register))
+        .routes(routes!(crate::handlers::auth::login))
+        .routes(routes!(crate::handlers::auth::refresh))
+        .routes(routes!(crate::handlers::introspect::introspect))
+        .routes(routes!(crate::handlers::auth::logout))
+        .routes(routes!(crate::handlers::auth::me))
+        .routes(routes!(crate::handlers::auth::rotate_api_key));
 
+    // api
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
             .per_second(1)
@@ -30,12 +29,35 @@ pub fn app_router(state: Arc<AppState>) -> Router {
             .unwrap(),
     );
 
-    let api = Router::new()
-        .route("/ping", get(api_handlers::ping))
+    let api = OpenApiRouter::new()
+        .routes(routes!(crate::handlers::api::ping))
         .route_layer(GovernorLayer::new(governor_conf));
 
-    Router::new()
+    let root = OpenApiRouter::new()
         .nest("/auth", auth)
         .nest("/api", api)
-        .with_state(state)
+        .with_state(state);
+
+    let (router, mut openapi): (Router, OpenApi) = root.split_for_parts();
+    let mut components = openapi.components.clone().unwrap_or_else(Components::new);
+
+    // Bearer auth
+    components.add_security_scheme(
+        "bearerAuth",
+        SecurityScheme::Http(
+            HttpBuilder::new()
+                .scheme(HttpAuthScheme::Bearer)
+                .bearer_format("JWT")
+                .build(),
+        ),
+    );
+
+    // API key in header x-api-key
+    components.add_security_scheme(
+        "apiKeyAuth",
+        SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("x-api-key"))),
+    );
+
+    openapi.components = Some(components);
+    router.merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", openapi))
 }

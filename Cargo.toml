@@ -28,3 +28,7 @@ hex = "0.4"
 bson = { version = "2", features = ["chrono-0_4"] }
 aes-gcm = "0.10"
 base64 = "0.22"
+utoipa = { version = "5.4.0", features = ["chrono"] }
+utoipa-axum = "0.2"
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
+

@@ -1,5 +1,6 @@
 use mongodb::bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserDoc {
@@ -20,12 +21,12 @@ pub struct UserDoc {
     pub api_key_created_at: BsonDateTime,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct UserPublic {
     pub id: String,
     pub email: String,
     pub name: String,
-    pub created_at: BsonDateTime,
+    pub created_at: String,
 }
 
 impl From<UserDoc> for UserPublic {
@@ -34,7 +35,16 @@ impl From<UserDoc> for UserPublic {
             id: u.id.to_hex(),
             email: u.email,
             name: u.name,
-            created_at: u.created_at,
+            created_at: bson_to_rfc3339(u.created_at),
         }
     }
+}
+fn bson_to_rfc3339(dt: BsonDateTime) -> String {
+    // bson::DateTime хранит миллисекунды от epoch; можно перевести в chrono
+    let ms = dt.timestamp_millis();
+    let secs = ms / 1000;
+    let nsec = ((ms % 1000) * 1_000_000) as u32;
+    let chrono_dt = chrono::DateTime::<chrono::Utc>::from_timestamp(secs, nsec)
+        .unwrap_or_else(|| chrono::DateTime::<chrono::Utc>::from_timestamp(0, 0).unwrap());
+    chrono_dt.to_rfc3339()
 }
