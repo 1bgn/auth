@@ -1,5 +1,5 @@
-use axum::http::Request;
-use tower_governor::{errors::GovernorError, key_extractor::KeyExtractor};
+use axum::http::{Request, StatusCode};
+use tower_governor::{key_extractor::KeyExtractor, GovernorError};
 
 pub const API_KEY_HEADER: &str = "x-api-key";
 
@@ -13,8 +13,8 @@ impl KeyExtractor for ApiKeyExtractor {
         let v = req
             .headers()
             .get(API_KEY_HEADER)
-            .ok_or_else(|| GovernorError::Other {
-                code: axum::http::StatusCode::UNAUTHORIZED,
+            .ok_or(GovernorError::Other {
+                code: StatusCode::UNAUTHORIZED,
                 msg: Some("missing x-api-key".to_string()),
                 headers: None,
             })?;

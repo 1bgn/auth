@@ -1,5 +1,4 @@
-use chrono::{DateTime, Utc};
-use mongodb::bson::oid::ObjectId;
+use mongodb::bson::{oid::ObjectId, DateTime as BsonDateTime};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -8,17 +7,13 @@ pub struct RefreshTokenDoc {
     pub id: ObjectId,
 
     pub user_id: ObjectId,
-
-    // jti из JWT refresh
     pub jti: String,
 
-    // sha256(refresh_token_string)
     pub token_hash: String,
 
-    pub created_at: DateTime<Utc>,
-    pub expires_at: DateTime<Utc>,
+    pub created_at: BsonDateTime,
+    pub expires_at: BsonDateTime,
 
-    // null => активен
-    pub revoked_at: Option<DateTime<Utc>>,
+    pub revoked_at: Option<BsonDateTime>,
     pub replaced_by: Option<ObjectId>,
 }

@@ -20,14 +20,20 @@ pub enum AppError {
     #[error("Not found")]
     NotFound,
 
-    #[error("Database error")]
-    Db(#[from] mongodb::error::Error),
+    #[error("Database error: {0}")]
+    Db(String),
 
     #[error("JWT error")]
     Jwt,
 
     #[error("Internal error: {0}")]
     Internal(String),
+}
+
+impl From<mongodb::error::Error> for AppError {
+    fn from(e: mongodb::error::Error) -> Self {
+        AppError::Db(e.to_string())
+    }
 }
 
 impl IntoResponse for AppError {

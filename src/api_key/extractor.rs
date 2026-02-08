@@ -1,11 +1,8 @@
-use axum::{
-    extract::{FromRequestParts, State},
-    http::request::Parts,
-};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use mongodb::bson::doc;
 use std::sync::Arc;
 
-use crate::{auth::sha256_hex, errors::AppError, models::user::UserDoc, state::AppState};
+use crate::{auth::jwt::sha256_hex, errors::AppError, models::user::UserDoc, state::AppState};
 
 pub const API_KEY_HEADER: &str = "x-api-key";
 
@@ -23,9 +20,10 @@ impl FromRequestParts<Arc<AppState>> for ApiKeyUser {
             .headers
             .get(API_KEY_HEADER)
             .ok_or(AppError::Unauthorized)?;
-        let api_key = v.to_str().map_err(|_| AppError::Unauthorized)?;
 
+        let api_key = v.to_str().map_err(|_| AppError::Unauthorized)?;
         let api_key_hash = sha256_hex(api_key);
+
         let user = state
             .users
             .find_one(doc! { "api_key_hash": api_key_hash })

@@ -1,6 +1,5 @@
 // src/main.rs
 mod api_key;
-mod api_key_crypto;
 mod auth;
 mod config;
 mod dto;
@@ -10,6 +9,7 @@ mod models;
 mod password;
 mod rate_limit;
 mod routes;
+mod services;
 mod state;
 
 use crate::{config::Config, routes::app_router, state::AppState};
@@ -31,13 +31,16 @@ async fn main() {
         .init();
 
     let cfg = Config::from_env();
-    let state = Arc::new(AppState::new(&cfg).await.expect("init state"));
+    let state = Arc::new(AppState::new(cfg).await.expect("init state"));
 
     let app = app_router(state)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http());
 
-    let listener = TcpListener::bind(&cfg.bind_addr).await.unwrap();
+    let listener =
+        TcpListener::bind(&std::env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".into()))
+            .await
+            .unwrap();
 
     axum::serve(listener, app).await.unwrap();
 }
