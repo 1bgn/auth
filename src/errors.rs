@@ -28,6 +28,8 @@ pub enum AppError {
 
     #[error("Internal error: {0}")]
     Internal(String),
+    #[error("Too many requests")]
+    TooManyRequests,
 }
 
 impl From<mongodb::error::Error> for AppError {
@@ -45,6 +47,7 @@ impl IntoResponse for AppError {
             AppError::NotFound => (StatusCode::NOT_FOUND, "not found"),
             AppError::Db(_) => (StatusCode::INTERNAL_SERVER_ERROR, "database error"),
             AppError::Jwt => (StatusCode::BAD_REQUEST, "invalid token"),
+            AppError::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, "too many requests"),
             AppError::Internal(s) => (StatusCode::INTERNAL_SERVER_ERROR, s.as_str()),
         };
 

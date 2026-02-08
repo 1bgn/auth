@@ -31,4 +31,3 @@ base64 = "0.22"
 utoipa = { version = "5.4.0", features = ["chrono"] }
 utoipa-axum = "0.2"
 utoipa-swagger-ui = { version = "9", features = ["axum"] }
-

@@ -27,6 +27,7 @@ pub struct IntrospectResponse {
     pub active: bool,
     pub sub: Option<String>, // user_id
     pub token_type: Option<String>,
+    pub scopes: Option<Vec<String>>,
 }
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct LoginRequest {

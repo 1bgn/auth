@@ -11,14 +11,9 @@ pub struct UserDoc {
     pub name: String,
 
     pub password_hash: String,
-
     pub created_at: BsonDateTime,
 
-    // API key (variant 2): hash for verification + ciphertext for reveal
-    pub api_key_hash: String,
-    pub api_key_ciphertext: Vec<u8>,
-    pub api_key_nonce: Vec<u8>,
-    pub api_key_created_at: BsonDateTime,
+    pub default_api_key_id: Option<ObjectId>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]

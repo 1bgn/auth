@@ -1,7 +1,8 @@
 use crate::{
     config::Config,
-    models::{refresh_token::RefreshTokenDoc, user::UserDoc},
+    models::{api_key::ApiKeyDoc, refresh_token::RefreshTokenDoc, user::UserDoc},
 };
+use bson::doc;
 use mongodb::{
     options::{ClientOptions, IndexOptions},
     Client, Collection, IndexModel,
@@ -13,6 +14,7 @@ pub struct AppState {
     pub cfg: Arc<Config>,
     pub users: Collection<UserDoc>,
     pub refresh_tokens: Collection<RefreshTokenDoc>,
+    pub api_keys: Collection<ApiKeyDoc>,
 }
 
 impl AppState {
@@ -46,11 +48,29 @@ impl AppState {
             .options(IndexOptions::builder().unique(true).build())
             .build();
         let _ = refresh_tokens.create_index(jti_index).await?;
+        let api_keys: Collection<ApiKeyDoc> = db.collection("api_keys");
 
+        // unique key_hash
+        let key_hash_index = IndexModel::builder()
+            .keys(doc! { "key_hash": 1 })
+            .options(IndexOptions::builder().unique(true).build())
+            .build();
+        api_keys.create_index(key_hash_index).await?;
+
+        // compound index для быстрого поиска active + user_id + scopes
+        let active_user_index = IndexModel::builder()
+            .keys(doc! {
+                "user_id": 1,
+                "active": 1,
+                "expires_at": 1
+            })
+            .build();
+        api_keys.create_index(active_user_index).await?;
         Ok(Self {
             cfg: Arc::new(cfg),
             users,
             refresh_tokens,
+            api_keys,
         })
     }
 }

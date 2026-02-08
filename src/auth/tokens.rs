@@ -12,7 +12,7 @@ pub struct IssuedTokens {
     pub access_token: String,
     pub refresh_token: String,
     pub token_type: String,
-    pub refresh_jti: String,
+    pub refresh_doc_id: ObjectId,
 }
 
 pub async fn issue_tokens_and_store_refresh(
@@ -29,10 +29,11 @@ pub async fn issue_tokens_and_store_refresh(
     let expires_at_millis =
         (Utc::now() + Duration::seconds(state.cfg.jwt_refresh_ttl_seconds)).timestamp_millis();
 
+    let refresh_doc_id = ObjectId::new();
     let rt = RefreshTokenDoc {
-        id: ObjectId::new(),
+        id: refresh_doc_id,
         user_id,
-        jti: refresh_jti.clone(),
+        jti: refresh_jti,
         token_hash: sha256_hex(&refresh_token),
         created_at: BsonDateTime::now(),
         expires_at: BsonDateTime::from_millis(expires_at_millis),
@@ -46,6 +47,6 @@ pub async fn issue_tokens_and_store_refresh(
         access_token,
         refresh_token,
         token_type: "Bearer".to_string(),
-        refresh_jti,
+        refresh_doc_id,
     })
 }

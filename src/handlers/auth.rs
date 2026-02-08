@@ -5,12 +5,13 @@ use crate::{
         RegisterResponse, RotateApiKeyResponse,
     },
     errors::AppError,
+    models::api_key::ApiKeyPublic,
     services::auth_service,
     state::AppState,
 };
 use axum::{extract::State, Json};
 use mongodb::bson::oid::ObjectId;
-use std::sync::Arc;
+use std::sync::Arc; // ← КЛЮЧЕВОЙ ИМПОРТ для Cursor.try_collect()
 
 #[utoipa::path(
     post,
@@ -68,7 +69,6 @@ pub async fn login(
         (status = 200, description = "Current user", body = crate::models::user::UserPublic),
         (status = 401, description = "Unauthorized")
     ),
-    // security сюда имеет смысл добавить, когда заведёшь securitySchemes (bearerAuth) [web:440]
     tag = "auth"
 )]
 pub async fn me(
@@ -113,9 +113,7 @@ pub async fn refresh(
     path = "/logout",
     request_body = RefreshRequest,
     responses(
-        (status = 200, description = "Logged out"),
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 400, description = "Bad request")
+        (status = 200, description = "Logged out", body = serde_json::Value)
     ),
     tag = "auth"
 )]
