@@ -1,0 +1,16 @@
+services:
+  auth:
+    image: b7am_ai/auth-service:latest   # или build: .
+    # build: .
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TTL_SECONDS: "900"
+      JWT_REFRESH_TTL_SECONDS: "2592000"
+      API_KEY_ENC_KEY: ${API_KEY_ENC_KEY}
+      RUST_LOG: info
+    ports:
+      - "3000:3000"
+
