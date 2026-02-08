@@ -1,0 +1,30 @@
+[package]
+name = "b7am-ai"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+axum = "0.8.8"
+tokio = {version="1.49.0",features=["full"]}
+tower-http = {version="0.6.8",features=["fs","cors","trace"]}
+mongodb = "3.5.1"
+jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
+
+argon2 = "0.5.3"
+chrono = { version = "0.4", features = ["serde"] }
+dotenv = "0.15"
+uuid = { version = "1", features = ["v4", "serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rand = "0.8"
+axum-extra = { version = "0.12.5", features = ["typed-header"] }
+tower_governor= {version="0.8.0",features=["axum"]}
+sha2 = "0.10"
+hex = "0.4"
+bson = { version = "2", features = ["chrono-0_4"] }
+aes-gcm = "0.10"
+base64 = "0.22"
